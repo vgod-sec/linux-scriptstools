@@ -18,45 +18,61 @@ clear
 echo -e "${BBLUE}🔍 JS Secret Recon - Automated Script${RESET}"
 echo -e "${BYELLOW}Author: Shivam Singh (Vgod) | GitHub: https://github.com/vgod-sec${RESET}\n"
 
-# ------------- 1. Get Input -------------
-read -p "$(echo -e ${BYELLOW}Enter target domain (e.g., example.com): ${RESET})" domain
-read -e -p "$(echo -e ${BYELLOW}Enter path to your subdomain file (e.g., subs.txt): ${RESET})" subdomain_file
+# ------------- 1. Input -------------
+echo -ne "${BYELLOW}Enter target domain (e.g., example.com): ${RESET}"
+read domain
+
+echo -ne "${BYELLOW}Enter path to your subdomain file (e.g., subs.txt): ${RESET}"
+read -e subdomain_file
 
 if [[ ! -f "$subdomain_file" ]]; then
   echo -e "${BRED}[!] File not found: $subdomain_file${RESET}"
   exit 1
 fi
 
-# ------------- 2. Setup Workspace -------------
+# ------------- 2. Tool Checks -------------
+for cmd in httpx subjs python3; do
+  if ! command -v $cmd &> /dev/null; then
+    echo -e "${BRED}[!] Required tool '$cmd' not found. Please install it before running.${RESET}"
+    exit 1
+  fi
+done
+
+# ------------- 3. Setup Workspace -------------
 WORKDIR="recon-$domain"
 mkdir -p "$WORKDIR"
 cp "$subdomain_file" "$WORKDIR/subdomains.txt"
 cd "$WORKDIR" || exit
 
-# Filenames
 SUBS="subdomains.txt"
 LIVE="live.txt"
 JSFILES="jsfiles.txt"
 FINDINGS="findings.txt"
 
-# ------------- 3. Probe Live Subdomains -------------
+# ------------- 4. Probe Live Subdomains -------------
 echo -e "\n${BYELLOW}[1] Probing live subdomains using httpx...${RESET}"
 cat "$SUBS" | httpx -silent -timeout 5 > "$LIVE"
-echo -e "${BGREEN}[✓] Found $(wc -l < $LIVE) live subdomains${RESET}"
+echo -e "${BGREEN}[✓] Found $(wc -l < "$LIVE") live subdomains${RESET}"
 
-# ------------- 4. Extract JS Files -------------
+# ------------- 5. Extract JS Files -------------
 echo -e "\n${BYELLOW}[2] Extracting JavaScript links using subjs...${RESET}"
 cat "$LIVE" | subjs | sort -u > "$JSFILES"
-echo -e "${BGREEN}[✓] Found $(wc -l < $JSFILES) JavaScript files${RESET}"
+echo -e "${BGREEN}[✓] Found $(wc -l < "$JSFILES") JavaScript files${RESET}"
 
-# ------------- 5. Scan JS for Secrets -------------
+# ------------- 6. Scan JS Files with SecretFinder -------------
 echo -e "\n${BYELLOW}[3] Scanning JS files for secrets using SecretFinder...${RESET}"
 > "$FINDINGS"
 count=0
 
+SECRET_FINDER_PATH="$(dirname "$0")/SecretFinder.py"
+if [[ ! -f "$SECRET_FINDER_PATH" ]]; then
+  echo -e "${BRED}[!] SecretFinder.py not found at: $SECRET_FINDER_PATH${RESET}"
+  exit 1
+fi
+
 while read -r url; do
-  result=$(python3 ../SecretFinder.py -i "$url" -o cli 2>/dev/null)
-  if [[ ! -z "$result" ]]; then
+  result=$(python3 "$SECRET_FINDER_PATH" -i "$url" -o cli 2>/dev/null)
+  if [[ -n "$result" ]]; then
     host=$(echo "$url" | awk -F/ '{print $3}')
 
     echo -e "\n${BMAGENTA}🔗 Subdomain: $host${RESET}" | tee -a "$FINDINGS"
@@ -66,7 +82,7 @@ while read -r url; do
   fi
 done < "$JSFILES"
 
-# ------------- 6. Summary -------------
+# ------------- 7. Summary -------------
 echo -e "\n${BGREEN}[✓] Recon complete!${RESET}"
 echo -e "${BMAGENTA}[✓] Secrets found in $count JavaScript files.${RESET}"
 echo -e "${BBLUE}📁 Results saved in: $WORKDIR/$FINDINGS${RESET}"
