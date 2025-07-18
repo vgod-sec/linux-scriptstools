@@ -1,13 +1,35 @@
-# 🐧 Linux Scripts and Tools
+# 🔍 JS Secret Recon
 
-A powerful collection of Linux-based scripts and utilities to automate, secure, and optimize system tasks. This repository serves as a personal toolkit of bash scripts, penetration testing helpers, audit tools, automation utilities, and custom tools built for daily use in cybersecurity and Linux system administration.
+A powerful Bash script to automate JavaScript file discovery and secret detection during bug bounty reconnaissance.
 
----
+## 🚀 Features
 
-## 📌 Features
+- Probes live subdomains using `httpx`
+- Extracts JS file URLs using `subjs`
+- Scans JS files for secrets like API keys, tokens, and credentials using `SecretFinder`
+- Saves results with subdomain context
 
-- 🛠️ Handy bash scripts for Linux automation
-- 🔐 Security auditing & hardening tools
-- 🐚 Custom pentest utilities and recon scripts
-- ⚙️ Productivity and debugging helpers
-- 🧪 Experimentation with Linux internals & sysadmin tools.
+## 🛠 Tools Used
+
+- `httpx` – Fast & flexible HTTP probing
+- `subjs` – Extracts JavaScript URLs from webpages
+- `SecretFinder` – Detects sensitive data in JS files
+
+## 📁 Output Structure
+
+- `live.txt` – Live subdomains
+- `js_links.txt` – JavaScript file URLs
+- `secrets/` – SecretFinder scan results per subdomain
+
+## 📌 Use Cases
+
+- Bug bounty reconnaissance
+- JS endpoint discovery
+- API key and secret hunting
+
+## 🔗 Author
+
+👤 GitHub: [vgod-sec](https://github.com/vgod-sec)  
+💼 LinkedIn: [shivamsinghvgod](https://linkedin.com/in/shivam-thakur1)
+
+⭐ Star this repo if it helps your recon workflow!
